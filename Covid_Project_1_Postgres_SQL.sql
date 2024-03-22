@@ -2,7 +2,7 @@
 -- Once tables are created, import the csv files
 
 create table covid_deaths(
-	iso_code varchar(10)
+    iso_code varchar(10)
   , continent varchar(255)
   , location varchar(255)
   , date date
@@ -32,7 +32,7 @@ create table covid_deaths(
 )
 ;
 create table covid_vaccinations(
-	iso_code varchar(10)
+    iso_code varchar(10)
   , continent varchar(255)
   , location varchar(255)
   , date date
@@ -84,10 +84,10 @@ create table covid_vaccinations(
 
 select
 	c.location
-  , c.date
-  , c.total_cases
-  , c.total_deaths
-  , (cast(c.total_deaths as decimal)/c.total_cases)*100 as death_perc
+      , c.date
+      , c.total_cases
+      , c.total_deaths
+      , (cast(c.total_deaths as decimal)/c.total_cases)*100 as death_perc
 from
 	covid_deaths c
 
@@ -99,10 +99,10 @@ from
 
 select
 	c.location
-  , c.date
-  , c.total_cases
-  , c.total_deaths
-  , (cast(c.total_deaths as decimal)/c.total_cases)*100 as death_perc
+      , c.date
+      , c.total_cases
+      , c.total_deaths
+      , (cast(c.total_deaths as decimal)/c.total_cases)*100 as death_perc
 from
 	covid_deaths c
 where
@@ -112,12 +112,12 @@ where
 -- Create CTE to find min, max and average death percentages
 
 with death_perc as (
-					select
+				select
 					c.location
-				  , c.date
-				  , c.total_cases
-				  , c.total_deaths
-				  , (cast(c.total_deaths as decimal)/c.total_cases)*100 as death_perc
+				      , c.date
+				      , c.total_cases
+				      , c.total_deaths
+				      , (cast(c.total_deaths as decimal)/c.total_cases)*100 as death_perc
 				from
 					covid_deaths c
 				where
@@ -127,8 +127,8 @@ with death_perc as (
 
 select
 	max(d.death_perc)
-  , min(d.death_perc)
-  , avg(d.death_perc)
+      , min(d.death_perc)
+      , avg(d.death_perc)
 from
 	death_perc d
 
@@ -137,10 +137,10 @@ from
 
 select
 	c.location
-  , c.date
-  , c.total_cases
-  , c.population
-  , (cast(c.total_cases as decimal)/ c.population)*100 as perc_cases
+      , c.date
+      , c.total_cases
+      , c.population
+      , (cast(c.total_cases as decimal)/ c.population)*100 as perc_cases
 from
 	covid_deaths c
 where
@@ -155,7 +155,7 @@ where
 
 select
 	c.location
-  , max(c.total_cases)
+      , max(c.total_cases)
 from
 	covid_deaths c
 group by
@@ -165,15 +165,15 @@ group by
 -- Looking at countries with the highest infection rate compared to the population
 
 select
-    c.location
-  , c.population
-  , max(c.total_cases) as highest_infection_cnt
-  , max((cast(c.total_cases as decimal)/ c.population))*100 as perc_pop_infected
+	c.location
+      , c.population
+      , max(c.total_cases) as highest_infection_cnt
+      , max((cast(c.total_cases as decimal)/ c.population))*100 as perc_pop_infected
 from
 	covid_deaths c
 group by
 	c.location
-  , c.population
+      , c.population
 order by
 	perc_pop_infected desc
 
@@ -187,7 +187,7 @@ order by
 
 select
 	c.location
-  , max(c.total_deaths) as total_death_count
+      , max(c.total_deaths) as total_death_count
 from
 	covid_deaths c
 where
@@ -208,7 +208,7 @@ order by
 
 select
 	c.continent
-  , max(c.total_deaths) as total_death_count
+      , max(c.total_deaths) as total_death_count
 from
 	covid_deaths c
 where 
@@ -223,9 +223,9 @@ order by
 
 select
 	c.date
-  , sum(c.new_cases) as total_cases -- new cases added up is the total cases
-  , sum(c.new_deaths) as total_deaths
-  , sum(c.new_deaths)/sum(c.new_cases)*100 as death_perc
+      , sum(c.new_cases) as total_cases -- new cases added up is the total cases
+      , sum(c.new_deaths) as total_deaths
+      , sum(c.new_deaths)/sum(c.new_cases)*100 as death_perc
 from
 	covid_deaths c
 where
@@ -242,8 +242,8 @@ order by
 
 select
 	sum(c.new_cases) as total_cases -- new cases added up is the total cases
-  , sum(c.new_deaths) as total_deaths
-  , sum(c.new_deaths)/sum(c.new_cases)*100 as death_perc
+      , sum(c.new_deaths) as total_deaths
+      , sum(c.new_deaths)/sum(c.new_cases)*100 as death_perc
 from
 	covid_deaths c
 where
@@ -267,11 +267,11 @@ from
 
 select
 	d.continent
-  , d.location
-  , d.date
-  , d.population
-  , v.new_vaccinations -- new vaccination per day
-  , sum(v.new_vaccinations) over(partition by d.location order by d.date) as rolling_cnt
+      , d.location
+      , d.date
+      , d.population
+      , v.new_vaccinations -- new vaccination per day
+      , sum(v.new_vaccinations) over(partition by d.location order by d.date) as rolling_cnt
   -- rolling count
 from
 	covid_deaths d
@@ -281,7 +281,7 @@ where
 	d.continent is not null
 order by
 	d.location
-  , d.date
+      , d.date
 
 
 -- Percentage of the population that is vaccinated on any specific date (grouped by location and date), CTE
@@ -303,8 +303,8 @@ with rolling_count as (
 			where
 				d.continent is not null
 			order by
-				  d.location
-			  	, d.date
+				d.location
+			      , d.date
 
 			)
 select
@@ -340,8 +340,8 @@ create temp table rolling_count as (
 			where
 				d.continent is not null
 			order by
-				  d.location
-			  	, d.date
+				d.location
+			      , d.date
 
 			)
 ;			
