@@ -204,6 +204,23 @@ order by
 */
 
 
+-- Total Death Count by Location
+
+select 
+	c.location
+      , sum(c.new_deaths) as total_death_count
+from 	
+	covid_deaths c
+where 
+	c.continent is null and c.location not in ('World', 'European Union', 'International') -- European Union apart of Europe
+	and c.location not like '%income%' -- so we don't include different income brackets for location
+group by 
+	c.location
+order by
+	total_death_count desc
+
+
+
 -- Continents with the highest death count
 
 select
@@ -378,6 +395,21 @@ create view rolling_cnt as(
 			rolling_count r
 )
 
+
+-- Percent Population Infected
+
+select 
+	c.location
+      , c.population
+      , max(total_cases) as highest_infection_count
+      , max((cast(total_cases as decimal)/population))*100 as percent_pop_infected
+from 
+	covid_deaths c
+group by 
+	c.location
+      , c.population
+order by 
+	percent_pop_infected desc
 
 
 
