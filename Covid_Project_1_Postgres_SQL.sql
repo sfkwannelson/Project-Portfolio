@@ -407,6 +407,22 @@ order by
 	percent_pop_infected desc
 
 
+-- Same as Percent Population Infected but on specific Dates
+
+select 
+	c.location
+      , c.population
+      , c.date
+      , max(total_cases) as highest_infection_count
+      , max((cast(total_cases as decimal)/population))*100 as percent_pop_infected
+from 
+	covid_deaths c
+group by 
+	c.location
+      , c.population
+      , c.date
+order by 
+	percent_pop_infected desc
 
 
 
