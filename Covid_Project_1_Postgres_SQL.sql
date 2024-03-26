@@ -239,18 +239,13 @@ order by
 -- GLOBAL NUMBERS, WORLDWIDE DATA
 
 select
-	c.date
-      , sum(c.new_cases) as total_cases -- new cases added up is the total cases
-      , sum(c.new_deaths) as total_deaths
-      , sum(c.new_deaths)/sum(c.new_cases)*100 as death_perc
+	sum(c.new_cases) as total_cases -- new cases added up is the total cases
+      , sum(cast(c.new_deaths as int)) as total_deaths
+      , sum(cast(c.new_deaths as int))/sum(c.new_cases)*100 as death_perc
 from
 	covid_deaths c
 where
 	continent is not null
-group by
-	c.date
-order by
-	c.date
 
 
 /* 
