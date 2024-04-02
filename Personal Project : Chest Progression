@@ -1,0 +1,189 @@
+create table chest_workout(
+	
+	   	date date
+	  , exercise varchar(255)
+	  , weight decimal(10,3)
+	  , sets int
+	  , reps decimal(10,3)
+
+)
+
+
+-- average sets per workout
+
+with total_sets_per_workout as (
+			select
+				  c.date
+			  , sum(c.sets) as total_sets
+			from
+				  chest_workout c
+			group by
+				  c.date
+			order by
+				  c.date
+	)
+	
+select
+    avg(t.total_sets) as avg_sets_per_workout
+from	
+  	total_sets_per_workout t
+
+
+-- average bench sets per workout
+
+with total_bench_sets_per_workout as (
+			select
+			  	c.date
+			  , sum(c.sets) as total_sets
+			from
+				  chest_workout c
+			where
+				  exercise ilike 'bench press'
+			group by
+				  c.date
+			order by
+				  c.date
+	)
+	
+select
+	  avg(t.total_sets) as avg_bench_sets_per_workout
+from	
+	  total_bench_sets_per_workout t	
+	
+/*
+	MAX NUMBERS
+*/
+
+-- max bench
+
+select
+	  max(c.weight) as bench_press_pr
+from	
+	  chest_workout c
+where
+	  c.exercise ilike 'bench press'
+
+
+-- max incline dumbbell press
+
+select
+	  max(c.weight) as incline_dumbbell_pr
+from	
+	  chest_workout c
+where
+	  c.exercise ilike 'incline dumbbell press'
+
+
+-- max flat dumbbell press
+
+select
+	  max(c.weight) as flat_dumbbell_pr
+from	
+	  chest_workout c
+where
+	  c.exercise ilike 'flat dummbell press'
+
+
+/*
+	percent of a month ~ chest workouts
+*/
+
+with distinct_dates as (
+			select
+				  c.date
+			  , date_part('month', c.date) as month
+			  , date_part('year', c.date) as year
+			from
+				  chest_workout c
+			group by
+				  c.date
+			order by
+				  c.date
+	),
+
+workouts_per_month as (
+			 select
+				    d.month
+			    , d.year
+			    , d.date
+			    , count(*) as workout_per_month
+			    , cast(date_trunc('month', d.date)
+				  + interval '1 month'
+				  - interval '1 day' as date)
+				  as last_day
+			from
+				    distinct_dates d
+			group by
+				    d.year
+			    , d.month
+			    , d.date
+			order by
+			    	d.year asc
+			    , d.month asc
+	)
+	
+select
+	  concat(w.month, '-', w.year) as date
+  , cast(count(w.month)/ date_part('day', w.last_day)*100 as decimal(10,2)) as perc_attend_gym 
+from
+	  workouts_per_month w
+group by
+	  w.month
+  , w.last_day
+  , w.year
+order by
+	  w.year asc
+  , w.month asc
+
+
+-- bench press progression for max
+
+select
+	  distinct(c.date)
+  , c.exercise
+  , max(c.weight)
+from
+	  chest_workout c
+where
+	  exercise ilike 'bench press'
+group by
+	  c.date
+  , c.exercise
+order by
+	  c.date 
+
+
+-- bench press progression for reps 225
+
+select
+	  c.date
+  , c.exercise
+  , round(c.reps, 0) as reps
+from
+	  chest_workout c
+where
+	  c.exercise ilike 'bench press' and c.weight = 225
+group by
+	  c.date
+  , c.exercise
+  , c.reps
+order by
+	  c.date
+	
+
+-- smith machine progression
+
+select
+	  c.date
+  , c.exercise
+  , max(c.weight) 
+from
+	  chest_workout c
+where
+	  exercise ilike 'smith machine%'
+group by
+	  c.date
+  , c.exercise
+  , c.weight
+order by
+	  c.date
