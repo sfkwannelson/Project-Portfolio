@@ -1,0 +1,402 @@
+/*
+	SQL TABLES
+*/
+
+-- creating a SQL table
+
+create table house_addresses (
+
+			  street varchar(255)
+		  , city varchar(255)
+		  , state_abv_2 varchar(2)
+		  , zip_code int
+		  , house_built_date date 
+	
+			)
+
+
+-- delete SQL table
+
+drop table house_addresses
+
+
+-- add additional columns to a SQL table
+
+alter table house_addresses add 
+	side_of_street_nsew char(5)
+
+
+-- remove columns from a SQL table
+
+alter table house_addresses drop 
+	side_of_street_nsew
+	
+	
+-- alter column name in a SQL table
+alter table house_addresses
+	rename column zip_code to zip
+
+
+-- insert new values/ data into a SQL table
+
+insert into house_addresses
+	values ('123 main street', 'austin', 'TX', '78704', null)
+
+
+
+/*
+	JOINS
+*/
+
+-- INNER JOIN : Only same values between the tables will be returned ~ they must match
+
+select
+	  c.first_name
+  , c.last_name
+  , c.address
+from
+	  customers c
+		  join states s
+			  c.state_id = s.state_id
+
+
+
+-- LEFT JOIN : Pull all data from the left, and join only matching data from the right, if there isn’t matching data on the right, we leave as NULL
+
+select
+	  c.first_name
+  , c.last_name
+  , c.address
+from
+	  customers c
+		  left join states s
+			  c.state_id = s.state_id
+			
+			
+			
+-- RIGHT JOIN (RIGHT OUTER JOIN) : Take all records from the right table and try to match them with the left table - if no match, take all right record values anyway 
+-- and put null values if there aren’t matches found 
+
+select
+	  c.first_name
+  , c.last_name
+  , c.address
+from
+	  customers c
+		  right join states s
+			  c.state_id = s.state_id
+
+
+
+-- FULL OUTER JOIN : Taking all records - taking full, taking information from both right and left table ~ it 
+-- will attempt to match both left and right records, but if no match, there will be null but they will join regardless of match
+
+select
+	  c.first_name
+  , c.last_name
+  , c.address
+from
+	  customers c
+		  full outer join states s
+			  c.state_id = s.state_id
+			
+			
+			
+-- SELF JOIN : joining a table to itself
+
+select
+  	e.employee_id
+  , e.first_name
+  , e.last_name 
+  , e.city
+  
+  , mgr.manager_id
+  , mgr.first_name
+  , mgr.lane_name
+  , mgr.city
+from	
+	  employees e
+		  join employees mgr
+			  on e.employee_id = mgr.manager_id
+
+
+-- CROSS JOIN : We are taking every record from the left table and joining every record on the right table
+
+select
+	  c.first_name
+  , c.last_name
+  , c.address
+from
+	  customers c
+		  cross join states s
+		
+		
+/*
+	UPPER CASE, LOWER CASE
+*/
+
+
+-- Turn all values in a column upper case and lower case; can be included in where clause
+
+select
+	  upper(c.gender) as upper_gender
+  , lower(c.gender) as lower_gender)
+from
+  	customers c
+where 
+	  lower(c.gender) = 'female'
+	
+/*
+	LIKE STATEMENT, IN STATEMENT
+*/
+
+
+-- like statement, ilike, and % wildcard
+
+select
+  	c.first_name
+  , c.last_name
+  , c.address
+from
+	  customers c
+where
+  	1=1
+	  and c.first_name like '%hazael%'
+  	and c.last_name ilike '%hazel%'
+	
+
+-- in statement
+
+select
+	  c.first_name
+  , c.last_name
+  , c.address
+  , c.birth_month
+from
+  	customers c
+where
+  	1=1
+	  and c.birth_month in (1,2,3) 
+	
+
+/*
+	DISTINCT
+*/
+
+-- distinct values
+
+select
+	  distinct
+		  c.customer_name
+from
+	  customers c
+	
+	
+/*
+	FILTER CLAUSE
+*/
+
+-- group by function; result set will be grouped by first name
+
+select
+  	c.first_name
+  , c.last_name
+  , c.address
+  , c.birth_month
+from
+	  customers c
+group by
+	  c.first_name
+
+
+-- having clause : Is a secondary where clause filtering option which you can use after all the filtering already has happened but you want new filters
+
+select
+	  c.first_name
+  , c.last_name
+  , c.address
+  , c.birth_month
+from
+	  customers c
+group by
+	  c.first_name
+having 
+	  count(*) = 2
+	
+
+-- order by 
+
+select
+	  c.first_name
+  , c.last_name
+  , c.address
+  , c.birth_month
+from
+	  customers c
+group by
+	  c.first_name
+having 
+	  count(*) = 2
+order by
+	  c.first_name asc
+	
+	
+/* 
+	MIN, MAX, AVG, SUM AGGREGATE FUNCTIONS
+*/
+
+select
+	  sum(c.yearly_income) as total_annual_income
+  , avg(c.yearly_income) as average_annual_income
+  , mix(c.yearly_income) as minimum_annual_income
+  , max(c.yearly_income) as maximum_annual_income
+from
+	  customers c
+
+ 
+-- if we want to calculate for a 5% raise
+
+select
+	  sum(c.yearly_income) * 1.05 as total_annaul_income_plus_5perc
+from
+	  customers c
+
+
+/*
+	CONCATENATE, COALESCE, NULL
+*/
+
+-- concatenate : Takes to cells and combines them to make a single cell of information
+
+select
+	  concat(c.customer_name, '-', c.city) as customer_name_city
+from
+	  customers c
+
+
+-- coalesce : look at a specific cell/ column/ value and if there happens to be a value, then return that value to us, but if there is no value, then replace it with something else
+
+select
+	  c.customer_name
+  , c.address_2
+  , coalesce(c.address_2, 'no-second-address-line') as updated_address_2_field
+from
+	  customers c
+
+
+-- null value
+
+select
+  	c.customer_name
+  , c.address_2
+from
+	  customers c
+where
+  	1=1
+	  and c.address_2 is null
+	  and c.address_2 is not null
+	
+	
+/*
+	DATES, days since last transaction, intervals
+*/
+
+-- date functions : current date and current timestamp
+
+select
+	current_date
+;
+
+select
+	current_timestamp
+	
+
+-- days since last transaction 
+
+select	
+  	t.transaction_id
+  , t.transaction_date
+  , (current_date - t.transaction_date) as days_since_last_transaction
+from
+	  transactions t
+
+
+-- interval : want to know difference between current date and 3 days ago
+
+select	
+  	t.transaction_id
+  , t.transaction_date
+  , current_date - interval '3 day' as date_3_days_ago
+from
+	  transactions t
+
+
+/*
+	CAST Function
+*/
+
+select	
+  	t.transaction_id
+  , cast(t.transaction_date as date)
+  , current_date - interval '3 day' as date_3_days_ago
+from
+	  transactions t
+
+
+
+/*
+	CASE STATEMENT
+*/
+
+select
+	  c.customer_name
+  , case when c.customer_name ilike 'h%' then 'starts-with-h'
+  		   when c.customer_name ilike 's%' then 'starts-with-s'
+		     else 'starts-with-something-else'
+		     end
+		   as name_starts_with
+from
+	  customers c
+	
+	
+/*
+	UNION, UNION ALL
+*/
+
+-- union : Union statement is going to give us distinct values
+
+	select
+		  e.first_name
+	from
+		  employee e
+
+union
+
+	select
+		  f.first_name
+	from
+		  friends f
+
+
+-- union all : Union all gives us all the records between the two tables on a single column
+
+
+	select
+		  e.first_name
+	from
+		  employee e
+
+union all
+
+	select
+	  	f.first_name
+	from
+	  	friends f
+
+
+
+
+
+
+
+
