@@ -1,0 +1,358 @@
+/*
+	BUSINESS CASE : 
+	We want to better understand the inventory for our food and drinks in our kitchen
+*/
+
+-- create foods, drinks and food_inventories table; import csv files
+
+create table foods (
+	
+  	food_id bigint
+  , item_name varchar(255)
+  , storage_type varchar(255)
+  , package_size int
+  , package_size_uom varchar(255)
+  , brand_name varchar(255)
+  , package_price decimal(14,2)
+  , price_last_updated_ts timestamp
+	
+)
+
+create table drinks (
+	
+	  drink_id bigint
+  , item_name varchar(255)
+  , storage_type varchar(255)
+  , package_size int
+  , package_size_uom varchar(255)
+  , brand_name varchar(255)
+  , package_price decimal(14,2)
+  , price_last_updated_ts timestamp
+	
+)
+
+create table food_inventories (
+
+  	food_inventory_id bigint
+  , food_item_id bigint
+  , quantity int
+  , inventory_dt date
+	
+)
+
+-- update food_id 2, item_name to 'ice cream'
+
+update foods
+	set item_name = 'ice cream'
+		where food_id = 2
+		
+-- pull number of food items
+
+select
+	count(*) as number_of_items
+from	
+	foods f
+	
+	
+-- assuming stakeholders don't know what uom (units of measure is), we make alter the column name
+
+alter table foods
+	rename column package_size_uom to package_size_units_of_measurement
+
+
+-- pull records that are only of the brand name 'H-E-B private label'
+
+select
+	  f.food_id
+  , f.item_name
+  , f.storage_type
+  , f.package_size
+  , f.package_size_uom as package_size_units_of_measurement
+  , f.brand_name
+  , f.package_price
+  , f.price_last_updated_ts
+from 
+	  foods f
+where
+	  brand_name ilike 'H-E-B (private label)'
+
+
+-- case statement : yes or no for if the food items are canned or not
+
+select
+  	f.food_id
+  , f.item_name
+  , f.storage_type
+  , f.package_size
+  , f.package_size_uom as package_size_units_of_measurement
+  , f.brand_name
+  , f.package_price
+  , f.price_last_updated_ts
+  , case when f.item_name ilike '%canned%' then 'yes'
+  		else 'no'
+		  end
+	  as is_canned_yn
+from 
+	  foods f
+
+
+-- find null values in the brand name column, and update the null values
+
+select
+	  f.food_id
+  , f.item_name
+  , f.storage_type
+  , f.package_size
+  , f.package_size_uom as package_size_units_of_measurement
+  , f.brand_name
+  , f.package_price
+  , f.price_last_updated_ts
+from 
+	  foods f
+where 
+	  brand_name is null
+	
+;
+
+update foods
+	set brand_name = 'H-E-B (private label)'
+		where food_id = 19
+
+
+-- now we want to update any null values under storage types
+
+select
+	distinct(f.storage_type)
+from
+	foods f
+	
+; 
+
+update foods
+	set storage_type = 'unknown'
+		where storage_type is null
+		
+
+-- output records that indicate how many items exist for each brand name
+
+select
+	  f.brand_name
+  , count(*) as record_count
+from
+	  foods f
+group by
+	  f.brand_name
+order by
+	  f.brand_name asc
+
+
+-- output records when we have multiple conditions
+
+select
+	  f.food_id
+  , f.item_name
+  , f.storage_type
+  , f.package_size
+  , f.package_size_uom as package_size_units_of_measurement
+  , f.brand_name
+  , f.package_price
+  , f.price_last_updated_ts
+from 
+	  foods f
+where 
+	  1=1
+	  and f.food_id = 13
+	  and f.food_id = 15
+	  and f.food_id = 17
+
+
+-- expand this with compound filter
+
+select
+	  f.food_id
+  , f.item_name
+  , f.storage_type
+  , f.package_size
+  , f.package_size_uom as package_size_units_of_measurement
+  , f.brand_name
+  , f.package_price
+  , f.price_last_updated_ts
+from 
+	  foods f
+where 
+	  1=1
+	  (or f.food_id = 13
+	   or f.food_id = 15
+	   or f.food_id = 17
+	   )
+	   and brand_name ilike 'H-E-B (private label)'
+	 
+
+-- calcuale the percentage of foods that are H-E-B private label
+
+select
+	  cast(n.record_count_private_label as decimal (14,2)) / cast(d.record_count_of_all_bn as decimal (14,2))
+from
+	(
+		select
+			count(*) as record_count_private_label
+		from
+			foods f
+		where
+			f.brand_name ilike 'H-E-B (private label)'
+	
+	) n 
+	
+	cross join
+		(
+			select
+				  count(*) as record_count_of_all_bn
+			from
+				  foods f
+		
+
+		) d 
+
+
+/*
+	CASE : find all values in the food table that don't have updated prices
+		   business standpoint, outdated prices can cause financial issues such as loss in profits
+*/
+
+-- convert the timezone from the data set to America/Chicago because our current timezone is America/Chicago 
+
+select
+	  f.food_id
+  , f.item_name
+  , f.storage_type
+  , f.package_size
+  , f.package_size_uom as package_size_units_of_measurement
+  , f.brand_name
+  , f.package_price
+  , f.price_last_updated_ts as time zone 'America/Chicago' as price_last_updated_cst_ts
+  , current_timestamp
+from 
+	  foods f
+
+
+-- calculate number of days since last price update and include current date
+
+select
+	  f.food_id
+  , f.item_name
+  , f.storage_type
+  , f.package_size
+  , f.package_size_uom as package_size_units_of_measurement
+  , f.brand_name
+  , f.package_price
+  , f.price_last_updated_ts as time zone 'America/Chicago' as price_last_updated_cst_ts
+  , current_timestamp
+  , (
+  		current_timestamp -
+	  		(f.price_last_updated_ts as time zone 'America/Chicago')) as price_last_updated_cst 
+  , current_date
+  , (
+  		current_date - cast(f.price_last_updated_ts as time zone 'America/Chicago' as date)
+	  
+			) as days_since_last_updated_cst -- days since last updated
+from 
+	  foods f
+
+
+-- CASE : we are concerned with price updates, if the price was last updated within the last 30 days
+
+select
+	  f.food_id
+  , f.item_name
+  , f.storage_type
+  , f.package_size
+  , f.package_size_uom as package_size_units_of_measurement
+  , f.brand_name
+  , f.package_price
+  , f.price_last_updated_ts as time zone 'America/Chicago' as price_last_updated_cst_ts
+  , current_timestamp
+  , (
+  		current_timestamp -
+	  		(f.price_last_updated_ts as time zone 'America/Chicago')) as price_last_updated_cst 
+  , current_date
+  , (
+  		current_date - cast(f.price_last_updated_ts as time zone 'America/Chicago' as date)
+	  
+			) as days_since_last_updated_cst -- days since last updated
+from 
+	  foods f
+where
+	  f.days_since_last_updated_cst > 30
+	
+
+-- produce result set where all foods and drinks rows and columns are included; with source data
+-- separate the food id and drinks id onto their own separate column
+
+	select
+		  f.food_id
+	  , null as drink_id -- if no food_id, then will go to drink_id column
+	  , f.item_name
+	  , f.storage_type
+	  , f.package_size
+	  , f.package_size_uom as package_size_units_of_measurement
+	  , f.brand_name
+	  , f.package_price
+	  , f.price_last_updated_ts
+	  , 'food_data' as source_table
+	from 
+		  foods f
+	
+union all
+
+	select
+		  null as food_id -- if no food_id, then will go to drink_id column
+	  , d.drink_id
+	  , d.item_name
+	  , d.storage_type
+	  , d.package_size
+	  , d.package_size_uom as package_size_units_of_measurement
+	  , d.brand_name
+	  , d.package_price
+	  , d.price_last_updated_ts
+	  , 'drinks_data' as source_table
+	from
+		  drinks d
+
+
+/*
+	CASE : we want to create a shopping list, but we need to know how much inventory we have
+	1. get the max date from the food inventory table
+	2. then do a look up for all foods inventory for that day
+*/
+
+select
+		  f.food_id
+	  , f.item_name
+	  , f.storage_type
+	  , f.package_size
+	  , f.package_size_uom as package_size_units_of_measurement
+	  , f.brand_name
+	  , f.package_price
+	  , f.price_last_updated_ts
+	  , i.quantity as inventory_quantity
+	from 
+		  foods f
+			  left join
+				  (
+					  select
+						  i.food_inventory_id
+					  , i.food_item_id
+					  , i.quantity
+					  , i.inventory_dt
+					from
+					  	food_inventories i
+					where
+						  inventory_dt(
+									  	       select
+											            max(inventory_dt) as max_inventory_dt
+									   	       from
+											            food_inventories i
+									)
+				
+				) i 
+					on f.food_id = i.food_item_id
