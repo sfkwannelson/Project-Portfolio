@@ -395,6 +395,253 @@ union all
 
 
 
+/*
+	CTE and TEMP TABLES
+*/
+
+
+-- data params tables, temp table
+
+create temp table data_params as(
+
+		select
+			max(trans_dt) as todays_date
+		from
+			transactions
+)
+
+;
+
+select
+	t.customer_id
+      , t.transaction_id
+      , t.trans_dt
+      , min(t.trans_dt) over(partition by t.customer_id) as min_cust_trans_dt
+      ,	case when t.trans_dt >= (
+  								select
+	  								*
+	  							from
+	  								data_params
+  								) - interval '90 days'
+from
+	transactions t
+	
+
+-- same thing, but with a CTE
+
+with data_params as(
+
+		select
+			max(trans_dt) as todays_date
+		from
+			transactions
+)
+
+;
+
+select
+	t.customer_id
+      , t.transaction_id
+      , t.trans_dt
+      , min(t.trans_dt) over(partition by t.customer_id) as min_cust_trans_dt
+      ,	case when t.trans_dt >= (
+  								select
+	  								*
+	  							from
+	  								data_params
+  								) - interval '90 days'
+from
+	transactions t
+
+
+
+/*
+	WINDOW FUNCTIONS, PARTITION
+*/
+
+
+-- different cases of partitions : mix, max, avg, count, sum
+
+select
+    t.*
+  , sum(t.items_in_trans) over(partition by t.trans_dt) as total_items_in_trans
+  , min(t.items_in_trans) over(partition by t.trans_dt) as min_items_in_trans
+  , max(t.items_in_trans) over(partition by t.trans_dt) as max_items_in_trans
+  , avg(t.items_in_trans) over(partition by t.trans_dt) as avg_items_in_trans
+  , count(t.items_in_trans) over(partition by t.trans_dt) as count_items_in_trans
+from
+    transactions t
+
+
+
+/*
+	ROW NUMBER FUNCTION
+*/
+
+-- to include a column that dictates the row number 
+
+select	
+    t.*
+  , row_number() over() as row_number
+from	
+    transactions t
+
+
+	
+/*
+	ORDER BY CLAUSE IN PARTITIONS
+*/
+
+-- order by the result set, here we ordered the row numbers by transaction date giving us the transaction history number
+
+select	
+    t.*
+  , row_number() over(order by t.trans_dt) as trans_hist_number
+from	
+    transactions t
+
+
+-- can include multiple order by specifications
+
+select	
+    t.*
+  , row_number() over(order by t.customer_id, t.trans_dt) as trans_hist_number
+from	
+    transactions t
+
+
+
+/*
+	SCENARIO : Let's say we are curious about how many customers are making a purchase in a given day, for a specific 
+		 	   customer on a specific day - we can now count the number of transactions 
+*/
+
+select	
+    t.*
+  , row_number() over(partition by t.customer_id order by t.trans_dt) as trans_hist_number
+from	
+    transactions t
+
+
+
+
+/*
+	LEAD and LAG FUNCTIONS :
+	Design to grab a record that is leading or lagging a specific row that you’re working on
+*/
+
+-- lead, get a result set in which the prior_trans_id column (new column) shows us the leading transaction id ~ the transaction that happens right after
+
+select	
+    t.*
+  , lead() over(order by t.trans_dt) as leading_trans_id
+from	
+    transactions t
+where
+    t.trans_dt = '2021-01-01'
+	
+	
+-- lag, use the lag function which shows us the transaction id that comes before the current transaction id we are working with 
+
+
+select	
+    t.*
+  , lag() over(order by t.trans_dt) as prior_trans_id
+from	
+    transactions t
+where
+    t.trans_dt = '2021-01-01'
+
+
+
+
+/*
+	RANK FUNCTION, DENSE RANK, PERCENT RANK, QUARTILES, PERCENTILE, MEDIAN :
+	Takes a list of values that you choose and assigns it a rank 
+*/
+
+
+-- rank, if repeating ranks, then skip (ex : if there is 5 first place, then next place would be sixth instead of second place)
+
+select	
+    t.*
+  , rank() over(order by t.items_in_trans desc) as rank_value
+from	
+    transactions t
+where
+    t.trans_dt = '2021-01-01'
+
+
+
+-- dense rank, still can have repeating ranks but the ranks are now in order instead of skipping ranks
+
+select	
+    t.*
+  , dense_rank() over(order by t.items_in_trans desc) as rank_value
+from	
+    transactions t
+where
+    t.trans_dt = '2021-01-01'
+
+
+
+-- percent rank, displays ranks in percentiles
+
+select	
+    t.*
+  , percent_rank() over(order by t.items_in_trans) as perc_rank
+from	
+    transactions t
+where
+    t.trans_dt = '2021-01-01'
+	
+	
+	
+-- quartiles, ntile(4) means to place into 4 different percentiles (quartiles)
+
+select	
+    t.*
+  , ntile(4) over(order by t.items_in_trans desc) as quartile
+from	
+    transactions t
+where
+    t.trans_dt = '2021-01-01'
+
+
+
+-- percentile, ntile(100) places it into percentiles (100%)
+
+select	
+    t.*
+  , ntile(100) over(order by t.items_in_trans desc) as percentile
+from	
+    transactions t
+where
+    t.trans_dt = '2021-01-01'
+
+
+
+-- median = 2 quartiles = 50th percentile, CTE for percentile
+
+with trans_items_percentiles as (
+			
+			select	
+			    t.*
+			  , ntile(100) over(order by t.items_in_trans desc) as percentile
+			from	
+			    transactions t
+			where
+			    t.trans_dt = '2021-01-01'
+	)
+	
+
+select
+    min(t.items_in_trans) as items_in_trans
+from
+    trans_items_percentiles t
+where
+    t.percentile >= .50
+
 
 
 
