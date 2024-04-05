@@ -644,6 +644,496 @@ where
 
 
 
+/*
+	STATISTICAL SUMMARY
+*/
 
+-- transaction totals, first CTE
+
+with transaction_totals as (
+	
+			select
+				ti.transaction_id
+			      , sum(p.price) as total_sales
+			from
+				transaction_items ti
+					join products p
+						on p.product_id = ti.product_id
+			group by
+				ti.transaction_id
+	)
+	
+-- transactions sales, second CTE
+
+,
+trans_sales as (
+	
+			select
+				t.trans_dt
+			      , t.transaction_id
+			      , ti.total_sales
+			      , ntile(4) over(order by ti.total_sales asc) as quartile
+			from
+				transactions t
+					join transaction_totals ti
+						on t.transaction_id = ti.transaction_id
+	)
+	
+-- quartile summary, third CTE
+
+,
+quartile_summary as (
+	
+			select
+				s.quartile
+			      , min(s.total_sales) as total_sales
+			from
+				trans_sales s
+			group by
+				s.quartile
+			order by
+				s.quartile
+	)
+	
+
+-- total sales summary, fourth CTE
+
+,
+total_sales_summary as (
+	
+			select
+				avg(s.total_sales) as avg_total_sales
+			      , max(s.total_sales) as max_total_sales
+			      , min(s.total_sales) as min_total_sales
+			from
+				trans_sales s
+	)
+	
+-- all total sales
+
+select
+	s.avg_total_sales
+      , s.max_total_sales
+      , s.min_total_sales
+      , max(case when q.quartile = 1 then q.total_sales else 0 end) as quartile_1_total_sales
+      , max(case when q.quartile = 2 then q.total_sales else 0 end) as median_total_sales
+      , max(case when q.quartile = 3 then q.total_sales else 0 end) as quartile_3_total_sales
+from
+	total_sales_summary s
+      , quartile_summary q
+group by
+	s.avg_total_sales
+      , s.max_total_sales
+      , s.min_total_sales
+	
+	
+/*
+	ADVANCED WINDOW FUNCTIONS
+	Running Total of Sales, day 1 to day 2 to day 3
+*/
+	
+	
+-- 1. take transactions total
+
+with transaction_totals as (
+	
+			select
+				ti.transaction_id
+			      , sum(p.price) as total_sales
+			from
+				transaction_items ti
+					join products p
+						on p.product_id = ti.product_id
+			group by
+				ti.transaction_id
+	)
+	
+-- 2. take daily sales summary
+
+with daily_sales_summary as (
+	
+			select
+				t.trans_dt
+			      , sum(ti.price) as total_sales
+			from
+				transactions t
+					join transaction_totals ti
+						on t.transaction_id = ti.transaction_id
+			group by
+				t.trans_dt
+			order by
+				t.trans_dt
+	
+	)
+	
+	
+-- select statement for running total of sales
+
+select
+	d.trans_dt
+      , d.total_sales
+      , sum(d.total_sales) over(order by d.trans_dt) as running_total_sales
+from
+	daily_sales_summary d
+order by
+	d.trans_dt
+	
+-- trailing 3 days in sales
+
+select
+	d.trans_dt
+      , d.total_sales
+      , sum(d.total_sales) over(order by d.trans_dt rows between 2 preceding and current row) as total_sales_trailing_3d
+from
+	daily_sales_summary d
+order by
+	d.trans_dt
+	
+	
+/*
+	ADVANCED DATE FUNCTIONS
+*/
+
+-- intervals
+
+select
+	t.*
+      , t.trans_dt + 1 interval '1 day'
+      , t.trans_dt + 1 interval '1 month'
+from
+	transactions t
+	
+	
+-- date_parts, extract values out of a date such as year, month, day
+-- example extracts the day, month and year from the date
+
+select
+	t.*
+      , date_part('day', trans_dt) as day_of_month
+      , date_part('month', trans_dt) as month_number
+      , date_part('year', trans_dt) as year_number
+from
+	transactions t
+	
+	
+	
+-- date_trunc, to get first day of the month
+-- note: we need to cast this into a date because it will be returned as a string
+	
+select
+	t.*
+      , cast(date_trunc('month', t.trans_dt) as date) as first_day_of_current_month
+from
+	transactions t
+	
+
+-- date_trunc, to get last day of the month
+	
+select
+	t.*
+  , cast(
+		  date_trunc('month', trans_dt) -- truncate to first day of the month
+		  + interval '1 month' -- jump forward one month
+		  - interval '1 day' -- go back 1 day for last day of the month
+		  as date )
+		as last_day_of_current_month
+from
+	transaction t
+	
+
+
+-- split part, to make 2023M01 to year and date
+
+with partitioned_dates as (
+			select
+				split_part('2023M01', 'M', 1) as date_yyyy -- 1 is position number
+			      , split_part('2023M01', 'M', 2) as date_mm
+	
+	)
+	
+select
+	cast(concat(p.date_yyyy, '-', p.date_mm, '01') as date) as first_of_month_dt
+from	
+	partitioned_dates p
+	-- just chose 01 for day since we don't have day information
+	
+	
+
+/*
+	DATA CLEANING : LENGHT AND TRIM
+*/
+
+-- we have a person name of 20, we trimmed it and checked for the length again = 11
+
+select
+	w.person_name 
+      , length(w.person_name) as string_length
+      , trim(w.person_name) as trimmed_person_name
+      , length(trim(w.person_name)) as string_length_trimmed
+from
+	whitespace_test w
+	
+	
+	
+/*
+	REGULAR REGRESSION : REGEX
+	note : only use when have to, not best practice to use
+*/
+	
+-- here we use the regexp_matches function to find PS5 and Playstation 5 matches in the description column and it added a new column which describes the value used
+
+select
+	p.*
+from
+	products p
+where
+	1=1
+	and p.description ilike '%Playstation 5%'
+	or p.description ilike '%PS5%'
+	
+;
+
+select
+	p.description
+      , regexp_matches(p.description, 'PS5 | Playstion 5')
+from	
+	products p
+	
+
+	
+/*
+	INTERSECT COMMAND
+*/
+
+-- interect command is a lot like union, but we are looking for an overlap ~ so if there is a record that exist in both Table A and Table B, then it would be returned (no duplicates)
+
+		select
+			f.food_name
+		from
+			tmp_foods f
+	
+intersect
+
+		select
+			f.food_name
+		from
+			tmp_fav_foods f
+			
+
+/*
+	UPDATE FROM SELECT
+*/
+	
+-- adding a select statement in an update command
+
+update tmp_ps_4_5_products
+	set price = p.price
+	from (
+		
+				select
+					p.product_id
+				      , p.price
+				from
+					products p
+			) p
+	where
+		tmp_ps_4_5_products.product_id = p.product_id
+	
+	
+	
+	
+/*
+	VIEW - a shortcut (like an application you have on your desktop), surface level it looks like a CTE or temp table, but behind the code there are 
+		   instructions that tell the database to get the data, also because this is like a shortcut ~ there are no duplicates (no need to worry about having two 
+		   sets of the same data and trying to keep them in sync)
+*/
+
+create view tmp_ps_4_5_products_vw as(
+
+				select
+					p.*
+				from
+					products p
+				where
+					1=1
+					and p.description ilike '%Playstation 5%'
+					or p.description ilike '%PS5%'
+					or p.description ilike '%Playstation 4%'
+					or p.description ilike '%PS4%'
+
+			)
+	
+	
+
+/*
+	PARTITIONED TABLES (not windows function partition)
+*/
+	
+-- this creates 4 different tables (partitioned tables)	
+	
+create table transactions_2020 partition of partitioned_transactions
+	for values from ('2020-01-01') to ('2021-01-01') --exclusive, doesn't user upper bound
+;
+create table transactions_2021 partition of partitioned_transactions
+	for values from ('2021-01-01') to ('2022-01-01')
+;
+create table transactions_2022 partition of partitioned_transactions
+	for values from ('2022-01-01') to ('2023-01-01')
+;
+create table transactions_2023 partition of partitioned_transactions
+	for values from ('2023-01-01') to ('2024-01-01')
+
+	
+-- to test, we can insert values
+
+insert into partitioned_transactions values (1, '2021-01-01', null, null, null)
+
+
+
+-- we will see that it'll be in the original partitioned_transactions table, but also in the specific partitioned table
+
+select
+	p.*
+from
+	partitioned_transactions p
+
+;
+select
+	p.*
+from
+	transactions_2021
+-- will show up in both tables above, will not show up in transactions_2020, 2022 and 2023
+	
+	
+	
+	
+/*
+	AUTO INCREMENT PRIMARY KEY :
+	field that automatically increments the primary key
+*/
+	
+create table tmp_customers(
+
+				customer_id bigserial primary key
+			      , first_name varchar(255)
+			      , last_name varchar(255)
+		)
+	
+insert into tmp_customers(first_name, last_name) values ('bob', 'belcher');
+insert into tmp_customers(first_name, last_name) values ('louise', 'belcher');
+insert into tmp_customers(first_name, last_name) values ('tina', 'belcher');
+
+-- this will automatically give each new row a customer id number
+
+
+
+/*
+	CONSTRAINTS :
+	rule that we include in a field to ensure intergrity of the data in database
+*/
+	
+-- here the constraint is the last name belcher, if we try to insert data that doesn't have last name belcher, there will be error
+
+create table tmp_bobs_family(
+
+				customer_id bigserial primary key
+			      , first_name varchar(255)
+			      , last_name varchar(255) check(last_name = 'belcher') -- constraint
+		)
+	
+insert into tmp_customers(first_name, last_name) values ('bob', 'belcher');
+insert into tmp_customers(first_name, last_name) values ('louise', 'belcher');
+insert into tmp_customers(first_name, last_name) values ('tina', 'belcher');	
+	
+;
+insert into tmp_customers(first_name, last_name) values ('phillip', 'frond');
+-- this will cause an error because frond does not meet the constraint of belcher
+
+
+
+
+/*
+	CUSTOM FUNCTIONS : 
+	creating your own functions
+*/
+	
+	
+-- taking the query for last day of the current month, we can make it into a function
+
+select
+	t.*
+  , cast(
+		  date_trunc('month', trans_dt) 
+		  + interval '1 month' 
+		  - interval '1 day'
+		  as date )
+		as last_day_of_current_month
+from
+	transaction t
+	
+;
+
+-- value coming in is a date, the output field 1 is also a date
+
+create function last_day_of_current_month(in date, out f1 date)	
+	as $$
+		select
+			cast(
+				  date_trunc('month', trans_dt) 
+				  + interval '1 month' 
+				  - interval '1 day'
+				  as date )
+		$$
+		
+	LANGUAGE SQL
+	
+
+
+-- we can use this function in a select statement after creating it
+
+select
+	t.*
+      , last_day_of_current_month(t.trans_dt) as fn_last_day_of_current_month
+
+from
+	transaction t
+	
+	
+	
+/*
+	STORED PROCEDURES : 
+	More powerful than creating your own functions - also, in a data analyst environment, creating your own functions may not be allowed
+	1. create a function that inserts records into two different records and do it as one job
+	2. if this is multilayered, we can wrap everything in a STORED PROCEDURE
+
+*/
+	
+-- we create two new tables, and create a procedure here
+
+create table tmp_family_members(
+	
+		member_id bigserial primary key
+	      , member_name varchar(255)
+	)
+;
+create table tmp_bank_accounts(
+	
+		member_id bigserial primary key
+	      , member_name varchar(255)
+	)	
+;
+
+create procedure add_new_family_member(name varchar(255))
+	LANGUAGE SQL -- tells procedure we are using SQL language
+	as $$
+			insert into tmp_family_members(member_name) values(name);
+			insert into tmp_bank_accounts(member_name) values(name);
+		$$
+		
+-- then we do a call function, this will add baby yoda in both tables
+
+call add_new_family_member('baby yoda')
+	
+	
 
 
