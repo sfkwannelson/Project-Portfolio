@@ -37,3 +37,360 @@ from
     employees e
 order by
     e.employee_id
+
+
+
+1398. Customers Who Bought Products A and B but Not C
+select
+    o.customer_id
+  , c.customer_name
+from
+    customers c
+        left join orders o
+            on c.customer_id = o.customer_id
+where
+    1=1
+    and o.customer_id in (select
+                            o.customer_id 
+                          from
+                            orders o
+                          where
+                            o.product_name = 'A'
+                                        )
+    and o.customer_id in (select
+                             o.customer_id
+                           from
+                             orders o
+                           where
+                             o.product_name = 'B'
+                                        )
+    and o.customer_id not in (select
+                                 o.customer_id
+                               from
+                                 orders o
+                               where
+                                 o.product_name = 'C'
+                                        )
+group by
+    o.customer_id
+  , c.customer_name 
+order by
+    o.customer_id
+
+
+
+1112. Highest Grade For Each Student
+with rnk as (
+            select
+                e.student_id
+            , e.course_id
+            , e.grade
+            , rank() over(partition by e.student_id order by e.grade desc) as rnk
+            from
+                enrollments e
+),
+grade as (
+            select
+                r.student_id
+            , r.course_id
+            , r.grade
+            , r.rnk
+            from
+                rnk r
+            where 
+                1=1
+                and r.rnk = 1
+)
+
+select
+    g.student_id
+  , min(g.course_id) as course_id
+  , g.grade
+from
+    grade g
+group by
+    g.student_id
+
+
+
+175. Combine Two Tables
+select
+    p.firstname
+  , p.lastname
+  , a.city
+  , a.state
+from    
+    person p
+        left join address a
+            on p.personid = a.personid
+
+
+
+1607. Sellers With No Sales
+select
+    s.seller_name
+from
+    seller s
+        left join orders o
+            on s.seller_id = o.seller_id
+where
+    1=1
+    and s.seller_id not in (
+                                select
+                                    distinct(o.seller_id)
+                                from
+                                    orders o
+                                where
+                                    1=1
+                                    and date_format(o.sale_date, '%Y') = '2020'
+                                )
+order by
+    s.seller_name asc
+
+
+
+1407. Top Travellers
+select
+    u.name
+  , ifnull(sum(r.distance), 0) as travelled_distance
+from
+    users u
+        left join rides r
+            on r.user_id = u.id
+group by
+    r.user_id
+order by 
+    travelled_distance desc
+  , u.name asc
+
+
+
+607. Sales Person
+select
+    distinct(s.name) as name
+from
+    salesperson s
+where
+    1=1
+    and s.sales_id not in (
+                        select
+                            o.sales_id
+                        from
+                            orders o
+                                left join company c
+                                    on c.com_id = o.com_id       
+                        where 
+                            1=1
+                            and c.name = 'RED'
+                        )
+
+
+
+1212. Team Scores in Football Tournament
+with points as (
+            select
+                m.*
+            , case when m.host_goals > m.guest_goals then 3
+                    when m.host_goals < m.guest_goals then 0
+                    when m.host_goals = m.guest_goals then 1
+                    end
+                    as host_points
+            , case when m.host_goals > m.guest_goals then 0
+                    when m.host_goals < m.guest_goals then 3
+                    when m.host_goals = m.guest_goals then 1
+                    end
+                    as guest_points
+            from    
+                matches m
+  
+), 
+total_points as (
+            select
+                u.team
+            , sum(u.total_points) as total_points
+            from
+                    (
+                    select
+                        p.host_team as team
+                    , sum(p.host_points) as total_points
+                    from    
+                        points p
+                    group by
+                        p.host_team
+
+            union all
+
+                    select 
+                        p.guest_team as team
+                    , sum(p.guest_points) as total_points
+                    from
+                        points p
+                    group by
+                        p.guest_team
+                    ) u
+            group by
+                u.team
+)
+
+select
+    t.team_id
+  , t.team_name
+  , ifnull(p.total_points, 0) as num_points
+from
+    teams t
+        left join total_points p
+            on t.team_id = p.team
+order by
+    num_points desc
+  , t.team_id asc
+
+
+
+1890. The Latest Login in 2020
+with rnk as (
+            select
+              l.user_id
+            , l.time_stamp
+            , rank() over(partition by l.user_id order by l.time_stamp desc) as rnk
+            from
+                logins l
+            where
+                1=1
+                and date_format(l.time_stamp, '%Y') = '2020'
+)
+
+select
+    r.user_id
+  , r.time_stamp as last_stamp
+from
+    rnk r
+where
+    1=1
+    and r.rnk = 1
+
+
+
+511. Game Play Analysis I
+with rnk as (
+            select
+              a.player_id
+            , a.device_id
+            , a.event_date
+            , a.games_played
+            , rank() over(partition by a.player_id order by a.event_date asc) as rnk
+            from
+                activity a
+)
+
+select
+    r.player_id
+  , r.event_date as first_login
+from
+    rnk r
+where 
+    1=1
+    and r.rnk = 1
+
+
+
+1571. Warehouse Manager
+with volume as (
+            select
+              p.product_id
+            , p.product_name
+            , p.width * p.length * p.height as volume
+            from
+                products p
+)
+
+select
+    w.name as warehouse_name
+  , sum(w.units * v.volume) as volume
+from
+    warehouse w
+        left join volume v
+            on w.product_id = v.product_id
+group by
+    w.name
+
+
+
+586. Customer Placing the Largest Number of Orders
+with num as (
+            select
+              o.customer_number
+            , count(*) as num_of_orders
+            from
+                orders o
+            group by
+                o.customer_number
+)
+
+select
+    n.customer_number
+from
+    num n
+where
+    1=1
+    and n.num_of_orders in ( select
+                                max(n.num_of_orders) as mx
+                             from
+                                num n
+                            )
+
+
+
+1741. Find Total Time Spent by Each Employee
+with total_time as (
+            select
+                e.emp_id
+            , e.event_day
+            , e.in_time
+            , e.out_time
+            , e.out_time - e.in_time as total_time
+            from    
+                employees e
+)
+
+select
+    t.event_day as day
+  , t.emp_id
+  , sum(t.total_time) as total_time
+from
+    total_time t
+group by
+    t.emp_id
+  , t.event_day
+
+
+
+1173. Immediate Food Delivery I
+with pref as (
+            select
+                d.delivery_id
+            , case when d.order_date = d.customer_pref_delivery_date then 'immediate'
+                    else 'scheduled'
+                    end
+                    as pref
+            from
+                delivery d
+),
+immediate as (
+            select
+                count(p.pref) as cnt
+            from
+                pref p
+            where
+                1=1
+                and p.pref = 'immediate'
+)
+
+select
+    round(i.cnt/ count(p.pref) *100, 2) as immediate_percentage
+from
+    immediate i, pref p
+
+
+
+
+
