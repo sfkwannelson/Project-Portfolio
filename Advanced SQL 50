@@ -1,0 +1,39 @@
+1821. Find Customers With Positive Revenue this Year
+select
+    c.customer_id
+from
+    customers c
+where
+    1=1
+    and c.year = '2021'
+    and c.revenue > 0
+
+
+183. Customers Who Never Order
+select
+    c.name as Customers
+from
+    customers c
+        left join orders o
+            on c.id = o.customerid
+where
+    1=1
+    and c.id not in (
+                        select
+                            o.customerid
+                        from
+                            orders o
+                        )
+
+
+1873. Calculate Special Bonus
+select
+    e.employee_id
+  , case when mod(e.employee_id, 2) = 1 and left(e.name, 1) != 'M' then e.salary
+         else 0
+         end
+        as bonus
+from
+    employees e
+order by
+    e.employee_id
