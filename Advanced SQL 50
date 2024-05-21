@@ -431,7 +431,30 @@ group by
 
 
 
+1587. Bank Account Summary II
+with total as (
+            select
+                t.trans_id
+            , t.account
+            , sum(t.amount) as total
+            , t.transacted_on
+            , u.name
+            from
+                transactions t
+                    left join users u
+                        on t.account = u.account
+            group by
+                t.account
+)
 
+select
+    t.name as NAME
+  , t.total as BALANCE
+from
+    total t
+where
+    1=1
+    and t.total > 10000
 
 
 
