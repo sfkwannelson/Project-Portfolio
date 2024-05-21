@@ -392,5 +392,54 @@ from
 
 
 
+1445. Apples & Oranges
+select
+    s.sale_date
+  , sum(case when s.fruit = 'apples' then s.sold_num
+         when s.fruit = 'oranges' then s.sold_num * -1
+         end)
+        as diff
+from
+    sales s
+group by
+    s.sale_date
+order by
+    s.sale_date
+
+
+
+1699. Number of Calls Between Two Persons
+with sorted as (
+                select 
+                    if(c.from_id < c.to_id, c.from_id, c.to_id) as from_id
+                  , if(c.from_id > c.to_id, c.from_id, c.to_id) as to_id
+                  , c.duration 
+                from 
+                    calls c
+                    )
+
+select 
+    s.from_id as person1
+  , s.to_id as person2
+  , count(s.from_id) as call_count
+  , sum(s.duration) as total_duration
+from
+    sorted s
+group by 
+    s.from_id
+  , s.to_id
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
