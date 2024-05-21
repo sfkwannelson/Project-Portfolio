@@ -478,6 +478,47 @@ where
 
 
 
+1050. Actors and Directors Who Cooperated At Least Three Times
+with ac_di as (
+            select
+              a.actor_id
+            , a.director_id
+            , concat(a.actor_id, '-', a.director_id) as ac_di
+            from    
+                actordirector a
+),
+cnt as (
+            select
+                a.ac_di
+            , count(*) as cnt
+            from 
+                ac_di a
+            group by
+                a.ac_di
+)
+
+select
+    a.actor_id
+  , a.director_id
+from
+    ac_di a
+where
+    1=1 
+    and a.ac_di in (select
+                        c.ac_di
+                    from
+                        cnt c
+                    where
+                        1=1
+                        and c.cnt >= 3
+    )
+group by
+    a.ac_di
+
+
+
+
+
 
 
 
