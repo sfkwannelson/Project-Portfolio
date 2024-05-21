@@ -458,6 +458,23 @@ where
 
 
 
+182. Duplicate Emails
+with rnk as (
+            select
+                p.id
+            , p.email
+            , rank() over(partition by p.email order by p.id asc) as rnk
+            from
+                person p
+)
+
+select
+    distinct(r.email) as Email
+from
+    rnk r
+where 
+    1=1
+    and r.rnk > 1
 
 
 
