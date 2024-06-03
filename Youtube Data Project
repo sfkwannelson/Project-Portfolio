@@ -1,0 +1,14 @@
+GOALS FOR DATA CLEANING IN MICROSOFT SQL MANAGEMENT SERVER : 
+1.  Remove the unnecessary  columns by only selecting the ones we need
+2.  Extract the YouTube channel names from the first column
+3.  Rename the column names using aliases 
+
+
+select
+	u.name
+  , u.total_subscribers
+  , u.total_views
+  , u.total_videos
+from	
+	us_top_youtubers_2024 u
+
