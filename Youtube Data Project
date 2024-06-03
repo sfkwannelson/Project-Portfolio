@@ -3,12 +3,33 @@ GOALS FOR DATA CLEANING IN MICROSOFT SQL MANAGEMENT SERVER :
 2.  Extract the YouTube channel names from the first column
 3.  Rename the column names using aliases 
 
+(1)
+select
+    u.name
+  , u.total_subscribers
+  , u.total_views
+  , u.total_videos
+from	
+    us_top_youtubers_2024 u
+
+
+(2)
+charindex :
+select
+    u.name
+  , charindex('@', u.name) as position
+from
+    us_top_youtubers_2024 u;
+
 
 select
-	u.name
+    cast(substring(u.name, 1, charindex('@', u.name)-1) as varchar(100)) as channel_name
   , u.total_subscribers
   , u.total_views
   , u.total_videos
 from	
 	us_top_youtubers_2024 u
+
+
+
 
