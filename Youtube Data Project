@@ -31,5 +31,107 @@ from
 	us_top_youtubers_2024 u
 
 
+THEN WE USE THIS NEW TABLE TO CREATE A VIEW : 
+
+create view view_us_youtubers_2024 as (
+select
+    cast(substring(u.name, 1, charindex('@', u.name)-1) as varchar(100)) as channel_name
+  , u.total_subscribers
+  , u.total_views
+  , u.total_videos
+from	
+    us_top_youtubers_2024 u
+	)
+
+Note * : create this view in order to import into power BI later - to ensure only relevant data is imported
+
+
+
+
+
+DATA TESTING (IMPORTANT): 
+#Data quality tests
+
+1. The data needs to be 100 records of YouTube channels (row count test)
+2. The data needs 4 fields (column count test)
+3. The channel name column must be string format, and the other columns must be numerical data types (data type check)
+4. Each record must be unique in the dataset (duplicate count check)
+
+Row count - 100
+Column count - 4
+
+Data Types
+
+channel_name = VARCHAR
+total_subscribers = integer or numerical
+total_views = integer or numerical
+total_videos = integer or numerical
+
+Duplicate count = 0
+
+
+-- 1. row count check (...PASSED!!!)
+
+select
+	count(*) as row_count
+from	
+	view_us_youtubers_2024 u 
+
+
+
+-- 2. column count check (...PASSED!!!)
+-- information_schema
+
+select
+	count(*) as column_count
+from	
+	information_schema.columns
+where
+	1=1
+	and table_name = 'view_us_youtubers_2024'
+
+
+
+-- 3. data type check (...PASSED!!!)
+
+select
+	column_name
+  , data_type
+from	
+	information_schema.columns
+where
+	1=1
+	and table_name = 'view_us_youtubers_2024'
+
+
+
+-- 4. duplicate count (...PASSED!!!)
+
+select
+	channel_name
+  , count(*) as duplicate_count
+from	
+	view_us_youtubers_2024
+group by
+	channel_name
+having 
+	count(*) > 1
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
