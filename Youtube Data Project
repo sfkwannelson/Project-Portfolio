@@ -1,3 +1,83 @@
+BUSINESS CASE : 
+Sharon works for a social media agency - head of marketing. She wants to run successful marketing campaigns with successful youtubers from the USA. She has a budget approved by the board so she wants to be certain where to channel the budget towards.
+
+
+Objective : 
+The Head of Marketing wants to find out who the top YouTubers are in 2024 to decide on which YouTubers would be best to run marketing campaigns throughout the rest of the year
+
+
+USE CASES AND DATA REQUIRED : 
+1. Identify the top Youtubers to run campaigns with
+
+User story 
+As the head of marketing, I want to identify the top YouTubers in the USA based on subscriber count, videos uploaded and views accumulated, so that I can decide on which channels would be best to run marketing campaigns with to generate a good ROI.
+
+Acceptance Criteria (all the expectations that this user may have)
+The dashboard should : 
+
+List the top Youtube Channels by subscribers, videos, and views
+Display key metrics (channel name, subscribers, videos, views, engagement ratio)
+Be user-friendly and easy to filter/ sort
+Use the most recent data possible
+
+
+2. Analyze the potential for marketing campaigns with Youtubers
+
+User story 
+As the head of marketing, I want to analyze the potential for successful campaigns with the top Youtubers so that I can maximize the ROI
+
+Acceptance Criteria 
+The solution should : 
+
+Recommend Youtube channels best suited for different campaign types (e.g. product placement, sponsored video series, influencer marketing)
+Consider reach, engagement and potential revenue based on estimated conversion rates
+Clearly explain the recommendations with data-driven justifications 
+
+
+SUCCESS CRITERIA 
+Sharon can : 
+Easily identify the top performing Youtube channels based on the key metrics mentioned above
+Assess the potential for successful campaigns with top Youtubers based on reach, engagement and potential revenue
+Make informed decisions based on the ideal collaborations to advance with based on recommendations
+This allows Sharon to achieve a good ROI and build relationships with Youtubers for future collaborations, which leads to recognition within the company.
+INFORMATION NEEDED
+Sharon needs the top Youtubers in the USA, and the key metrics needed include : 
+
+Subscriber count
+Videos uploaded
+Views
+Average views
+Subscriber engagement ratio
+Views per subscriber
+
+DATA NEEDED
+The dataset to produce the information we need should include the following fields : 
+
+Channel name (string)
+Total subscribers (integer)
+Total videos uploaded (integer)
+Total views (integer)
+
+Focus on the top 100 Youtubers
+
+DATA QUALITY CHECKS 
+We need to add measures in place to confirm the dataset contains the data required without any issues - here are some of the data quality checks we need to conduct : 
+
+Row count check
+Column count check
+Data type check
+Duplicate check
+
+ADDITIONAL REQUIREMENTS 
+Document the solution and include the data sources, transformation processes and walk through on analysis conclusions
+Make source code and docs available on GitHub
+Ensure the solution is reproducible and maintainable so that it can support future updates
+
+Note * : once we have this outlined, we run it by Sharon to make sure everything is in line and we have all the information we need and that we have set the right path to acceptable analysis
+
+
+
+
 GOALS FOR DATA CLEANING IN MICROSOFT SQL MANAGEMENT SERVER : 
 1.  Remove the unnecessary  columns by only selecting the ones we need
 2.  Extract the YouTube channel names from the first column
@@ -116,22 +196,4 @@ group by
 	channel_name
 having 
 	count(*) > 1
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
